@@ -16,7 +16,7 @@ var config = {
       'Proxy-Connection': 'keep-alive', 
       'Referer': 'http://lgjw.hpu.edu.cn/app-web/', 
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0', 
-      'token': 'cb5608758eb74cb4a7641be15ed76e05', 
+      'token': '701309e1297545aaa6b152f3dcc874af', //6e8a84ca1b16443b98c998ec03740ecc
       'Content-Type': 'application/x-www-form-urlencoded', 
       'Host': 'lgjw.hpu.edu.cn', 
       'Connection': 'keep-alive'
