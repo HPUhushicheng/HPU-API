@@ -1,5 +1,12 @@
 var axios = require('axios');
 var qs = require('qs');
+var readline = require('readline');
+
+// 创建CLI接口，获取用户输入
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
 
 // Base64编码原始密码的函数
 function encodePassword(password) {
@@ -7,13 +14,13 @@ function encodePassword(password) {
 }
 
 // 封装获取新token的函数
-async function getNewToken(rawPassword) {
+async function getNewToken(rawPassword, userCode) {
     // 对原始密码进行Base64编码
     var encodedPassword = encodePassword(rawPassword);
 
     var data = qs.stringify({
         'passwd': encodedPassword,
-        'user_code': '312201030222'
+        'user_code': userCode
     });
 
     var config = {
@@ -26,6 +33,7 @@ async function getNewToken(rawPassword) {
             'Proxy-Connection': 'keep-alive',
             'Referer': 'http://lgjw.hpu.edu.cn/app-web/',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0',
+            'Cookie': 'INGRESSCOOKIE=3105ba56b8cab4c5d8f8264544076b32|69770b29de3f3d7b1578acd945cb3a27; _gscu_1470794712=88388573boy2n918',
             'Content-Type': 'application/x-www-form-urlencoded',
             'Host': 'lgjw.hpu.edu.cn',
             'Connection': 'keep-alive'
@@ -35,14 +43,22 @@ async function getNewToken(rawPassword) {
 
     try {
         const response = await axios(config);
+        console.log('响应内容:', response.data); // 打印完整的响应数据
         const businessData = response.data.business_data;
-        const decodedData = Buffer.from(businessData, 'base64').toString('utf8');
-        const token = JSON.parse(decodedData).token; // 提取token字段
-        return token; // 直接返回token
+    
+        if (businessData) {
+            const decodedData = Buffer.from(businessData, 'base64').toString('utf8');
+            const token = JSON.parse(decodedData).token; // 提取token字段
+            return token; // 直接返回token
+        } else {
+            console.error('business_data 不存在');
+            return null;
+        }
     } catch (error) {
         console.error('获取新token失败:', error);
         return null;
     }
+    
 }
 
 // 整理课程表数据的函数
@@ -53,7 +69,7 @@ function processCourseData(courses) {
         const date = course.date;
         const startTime = course.start_time;
         const endTime = course.end_time;
-        const address = course.rooms[0]?.address || "教师暂未查询到"; // 获取第一个房间的地址
+        const address = course.rooms[0]?.address || "地址未提供"; // 获取第一个房间的地址
 
         return {
             courseName,
@@ -96,7 +112,6 @@ async function getCourseSchedule(token) {
         const response = await axios(config);
         const businessData = response.data.business_data;
         const decodedData = Buffer.from(businessData, 'base64').toString('utf8');
-        //console.log('解码输出的business_data:', decodedData);
         const courseList = JSON.parse(decodedData); // 解析JSON数据
         return courseList; // 返回课程列表
     } catch (error) {
@@ -105,21 +120,53 @@ async function getCourseSchedule(token) {
     }
 }
 
-// 示例使用
-async function exampleUsage() {
-    const rawPassword = '020812'; // 原始密码
-    const token = await getNewToken(rawPassword);
+// 按日期获取对应星期几的课程
+function getCoursesForDay(courses, dayOfWeek) {
+    const daysMap = {
+        '1': '2024-10-21', // 周一
+        '2': '2024-10-22', // 周二
+        '3': '2024-10-23', // 周三
+        '4': '2024-10-24', // 周四
+        '5': '2024-10-25', // 周五
+        '6': '2024-10-26', // 周六
+        '7': '2024-10-27'  // 周日
+    };
 
-    if (token) {
-        console.log('获取到的新token:', token);
-        const courseData = await getCourseSchedule(token); // 获取课程表数据
+    const selectedDate = daysMap[dayOfWeek];
+    const filteredCourses = courses.filter(course => course.date === selectedDate);
 
-        // 处理课程表数据
-        const processedData = processCourseData(courseData);
-        console.log('整理后的课程数据:', processedData);
+    if (filteredCourses.length > 0) {
+        return filteredCourses.sort((a, b) => a.startTime.localeCompare(b.startTime));
     } else {
-        console.log('未能获取到token');
+        return null; // 没有匹配的课程
     }
 }
 
-exampleUsage();
+// CLI 用户输入
+rl.question('请输入学号: ', (userCode) => {
+    rl.question('请输入密码: ', async (rawPassword) => {
+        const token = await getNewToken(rawPassword,userCode);
+
+        if (token) {
+            const courseData = await getCourseSchedule(token); // 获取课程表数据
+            const processedData = processCourseData(courseData);
+
+            rl.question('请输入您想查询的星期几（1: 周一, 2: 周二, 3: 周三, 4: 周四, 5: 周五, 6: 周六, 7: 周日）: ', (dayOfWeek) => {
+                const coursesForDay = getCoursesForDay(processedData, dayOfWeek);
+
+                if (coursesForDay && coursesForDay.length > 0) {
+                    console.log('当天的课程安排:');
+                    coursesForDay.forEach(course => {
+                        console.log(`课程名称: ${course.courseName}, 开始时间: ${course.startTime}, 结束时间: ${course.endTime}, 地点: ${course.address}`);
+                    });
+                } else {
+                    console.log('今天暂无课程');
+                }
+                rl.close();
+            });
+        } else {
+            console.log('获取token失败');
+            rl.close();
+        }
+    });
+});
