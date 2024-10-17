@@ -69,7 +69,7 @@ function processCourseData(courses) {
 async function getCourseSchedule(token) {
     var data = qs.stringify({
         'biz_type_id': '1',
-        'end_date': '2024-10-27',
+        'end_date': '2024-10-28',
         'semester_id': '184',
         'start_date': '2024-10-21'
     });
@@ -120,6 +120,8 @@ async function exampleUsage() {
     } else {
         console.log('未能获取到token');
     }
+    
 }
+
 
 exampleUsage();

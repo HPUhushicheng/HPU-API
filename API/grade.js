@@ -5,7 +5,7 @@ var qs = require('qs');
 var data = qs.stringify({
    'biz_type_id': '1',
    'kind': 'all',
-   'token': 'cb5608758eb74cb4a7641be15ed76e05' 
+   'token': '089531f71e3e4bf7926c14c58a8642a4' 
 });
 
 // 请求配置
@@ -19,7 +19,7 @@ var config = {
       'Proxy-Connection': 'keep-alive', 
       'Referer': 'http://lgjw.hpu.edu.cn/app-web/', 
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0', 
-      'token': 'cb5608758eb74cb4a7641be15ed76e05', 
+      'token': '089531f71e3e4bf7926c14c58a8642a4', 
       'Content-Type': 'application/x-www-form-urlencoded', 
       'Host': 'lgjw.hpu.edu.cn', 
       'Connection': 'keep-alive'
